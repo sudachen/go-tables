@@ -6,7 +6,7 @@ PKGSLIST = tables util
 COVERPKGS= $(subst $(space),$(comma),$(strip $(foreach i,$(PKGSLIST),github.com/sudachen/go-tables/$(i))))
 
 build:
-	cd mx; go build
+	go build ./...
 
 run-tests:
 	mkdir -p github.com/sudachen
