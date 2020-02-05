@@ -2,27 +2,12 @@ package tables
 
 import (
 	"fmt"
+	"go-tables/util"
 	"reflect"
 )
 
 type Column struct {
 	column reflect.Value
-}
-
-/*
-t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",42,1.2},{"Petrov",42,1.5}})
-t.Col("Name").String(0) -> "Ivanov"
-t.Col("Name").Extract().([]string)[0] -> "Ivanov"
-t.Col("Name").Len() -> 2
-t.Col("Age").Unique().Extract().([]int) -> {42}
-*/
-func (t *Table) Col(column string) *Column {
-	for i,n :=range t.names {
-		if n == column {
-			return &Column{column: t.columns[i]}
-		}
-	}
-	panic("there is not column with name "+column)
 }
 
 /*
@@ -48,6 +33,16 @@ func (c *Column) Strings() []string {
 }
 
 var intType = reflect.TypeOf(int(0))
+var int8Type = reflect.TypeOf(int8(0))
+var int16Type = reflect.TypeOf(int16(0))
+var int32Type = reflect.TypeOf(int32(0))
+var int64Type = reflect.TypeOf(int64(0))
+
+var uintType = reflect.TypeOf(uint(0))
+var uint8Type = reflect.TypeOf(uint8(0))
+var uint16Type = reflect.TypeOf(uint16(0))
+var uint32Type = reflect.TypeOf(uint32(0))
+var uint64Type = reflect.TypeOf(uint64(0))
 
 /*
 t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
@@ -55,7 +50,88 @@ t.Col("Age").Int(0) -> 32
 */
 func (c *Column) Int(row int) int {
 	v := c.column.Index(row)
-	return Convert(v,intType).(int)
+	return util.Convert(v,intType).(int)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Int8(0) -> 32
+*/
+func (c *Column) Int8(row int) int8 {
+	v := c.column.Index(row)
+	return util.Convert(v,int8Type).(int8)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Int16(0) -> 32
+*/
+func (c *Column) Int16(row int) int16 {
+	v := c.column.Index(row)
+	return util.Convert(v,int16Type).(int16)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Int64(0) -> 32
+*/
+func (c *Column) Int32(row int) int32 {
+	v := c.column.Index(row)
+	return util.Convert(v,int32Type).(int32)
+}
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Int64(0) -> 32
+*/
+func (c *Column) Int64(row int) int64 {
+	v := c.column.Index(row)
+	return util.Convert(v,int64Type).(int64)
+}
+
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uint(0) -> 32
+*/
+func (c *Column) Uint(row int) uint {
+	v := c.column.Index(row)
+	return util.Convert(v,uintType).(uint)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uint8(0) -> 32
+*/
+func (c *Column) Uint8(row int) uint8 {
+	v := c.column.Index(row)
+	return util.Convert(v,uint8Type).(uint8)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uint16(0) -> 32
+*/
+func (c *Column) Uint16(row int) uint16 {
+	v := c.column.Index(row)
+	return util.Convert(v,uint16Type).(uint16)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uint64(0) -> 32
+*/
+func (c *Column) Uint32(row int) uint32 {
+	v := c.column.Index(row)
+	return util.Convert(v,uint32Type).(uint32)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Int64(0) -> 32
+*/
+func (c *Column) Uint64(row int) uint64 {
+	v := c.column.Index(row)
+	return util.Convert(v,uint64Type).(uint64)
 }
 
 /*
@@ -66,15 +142,96 @@ func (c *Column) Ints() []int {
 	return c.ExtractAs(intType).([]int)
 }
 
-var floatType = reflect.TypeOf(float32(0))
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Ints8(0) -> {32,44}
+*/
+func (c *Column) Ints8() []int8 {
+	return c.ExtractAs(int8Type).([]int8)
+}
 
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Ints16(0) -> {32,44}
+*/
+func (c *Column) Ints16() []int16 {
+	return c.ExtractAs(int16Type).([]int16)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Ints32(0) -> {32,44}
+*/
+func (c *Column) Ints32() []int32 {
+	return c.ExtractAs(int32Type).([]int32)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Ints64(0) -> {32,44}
+*/
+func (c *Column) Ints64() []int64 {
+	return c.ExtractAs(int64Type).([]int64)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uints(0) -> {32,44}
+*/
+func (c *Column) Uints() []uint {
+	return c.ExtractAs(uintType).([]uint)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uints8(0) -> {32,44}
+*/
+func (c *Column) Uints8() []uint8 {
+	return c.ExtractAs(uint8Type).([]uint8)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uints16(0) -> {32,44}
+*/
+func (c *Column) Uints16() []uint16 {
+	return c.ExtractAs(uint16Type).([]uint16)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uints32(0) -> {32,44}
+*/
+func (c *Column) Uints32() []uint32 {
+	return c.ExtractAs(uint32Type).([]uint32)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Age").Uints64(0) -> {32,44}
+*/
+func (c *Column) Uints64() []uint64 {
+	return c.ExtractAs(uint64Type).([]uint64)
+}
+
+var floatType = reflect.TypeOf(float32(0))
+var float64Type = reflect.TypeOf(float64(0))
 /*
 t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Col("Rate").Float(0) -> 1.2
 */
 func (c *Column) Float(row int) float32 {
 	v := c.column.Index(row)
-	return Convert(v,floatType).(float32)
+	return util.Convert(v,floatType).(float32)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Rate").Float64(0) -> 1.2
+*/
+func (c *Column) Float64(row int) float64 {
+	v := c.column.Index(row)
+	return util.Convert(v,float64Type).(float64)
 }
 
 /*
@@ -83,6 +240,14 @@ t.Col("Rate").Floats() -> {1.2,1.5}
 */
 func (c *Column) Floats() []float32 {
 	return c.ExtractAs(floatType).([]float32)
+}
+
+/*
+t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t.Col("Rate").Floats64() -> {1.2,1.5}
+*/
+func (c *Column) Floats64() []float64 {
+	return c.ExtractAs(float64Type).([]float64)
 }
 
 /*
@@ -105,7 +270,7 @@ func (c *Column) ExtractAs(tp reflect.Type) interface{} {
 		reflect.Copy(r,c.column)
 		return r.Interface()
 	} else {
-		return Convert(c.column,tp)
+		return util.Convert(c.column,tp)
 	}
 }
 
@@ -146,9 +311,9 @@ func (c *Column) Unique() *Column {
 	for i:=0; i < c.column.Len(); i++ {
 		x := c.column.Index(i)
 		q := m.MapIndex(x)
-		if !q.Bool() {
+		if !q.IsValid() {
 			r = reflect.Append(r,x)
-			q.Set(v)
+			m.SetMapIndex(x,v)
 		}
 	}
 	return &Column{r}

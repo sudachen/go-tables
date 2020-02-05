@@ -2,4 +2,8 @@ module go-tables
 
 go 1.13
 
-require github.com/sudachen/errors v0.0.0-20191016045703-225f7c4e6310 // indirect
+require (
+	github.com/google/go-cmp v0.4.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	gotest.tools v2.2.0+incompatible
+)
