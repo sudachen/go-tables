@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"go-tables/tables"
-	"go-tables/util"
+	"github.com/sudachen/go-tables/tables"
+	"github.com/sudachen/go-tables/util"
 	"gotest.tools/assert"
 	"testing"
 )

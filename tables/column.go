@@ -2,7 +2,7 @@ package tables
 
 import (
 	"fmt"
-	"go-tables/util"
+	"github.com/sudachen/go-tables/util"
 	"reflect"
 )
 

@@ -1,4 +1,4 @@
-module go-tables
+module github.com/sudachen/go-tables
 
 go 1.13
 

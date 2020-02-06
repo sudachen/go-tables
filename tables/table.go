@@ -1,7 +1,7 @@
 package tables
 
 import (
-	"go-tables/util"
+	"github.com/sudachen/go-tables/util"
 	"reflect"
 )
 
@@ -30,7 +30,7 @@ func Empty() *Table {
 /*
 tables.New(struct{Name string; Age int; Rate float32}{})
 tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-tables.New(map[string]interface{}{"Name":[]string{"Ivanov","Petrov"},"Age":[]int{32,44},"Rate":[]float{1.2,1.5}})
+tables.New(map[string]interface{}{"Name":[]string{"Ivanov","Petrov"},"Age":[]int{32,44},"Rate":[]float32{1.2,1.5}})
 
 type R struct{Name string; Age int; Rate float32}
 c := make(chan R)
@@ -136,7 +136,7 @@ func New(o interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",42,1.2},{"Petrov",42,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",42,1.2},{"Petrov",42,1.5}})
 t.Col("Name").String(0) -> "Ivanov"
 t.Col("Name").Len() -> 2
 */
@@ -157,7 +157,7 @@ func (t *Table) Col(column string) *Column {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Row(0)["Name"].String() -> "Ivanov"
 */
 func (t *Table) Row(row int) map[string]reflect.Value {
@@ -170,7 +170,7 @@ func (t *Table) Row(row int) map[string]reflect.Value {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Slice(0).Row(0) -> {"Ivanov",32,1.2}
 t.Slice(1).Row(0) -> {"Petrov",44,1.5}
 t.Slice(0,2).Len() -> 2
@@ -197,7 +197,7 @@ func (t *Table) Slice(slice ...int) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Only("Age","Rate").Row(0) -> {"Age": 32, "Rate": 1.2}
 */
 func (t *Table) Only(column ...string) *Table {
@@ -281,7 +281,7 @@ func (t *Table) Concat(a *Table) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 q := t.Transform(func(r struct{Name string}, i int) struct{Info string}{
 			return struct{Info string}{fmt.Sprintf("rec %d for %s", i, r.Name)}
 		})
@@ -308,7 +308,7 @@ func (t *Table) Transform(r interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.List(func(r struct{Rate float}, i int){
 			fmt.Println(i, r.Rate)
 		})
@@ -323,7 +323,7 @@ func (t *Table) List(r interface{}) {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 q := t.Filter(func(r struct{Age int}) bool{
 			return r.Age > 40
 		})
@@ -344,7 +344,7 @@ func (t *Table) Filter(r interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2}
 q := t.Sort("Name",tables.DESC)
 q.Row(0) -> {Name: "Petrov", "Age": 44, "Rate", 1.5}
@@ -370,7 +370,7 @@ func (t *Table) Reduce(f interface{}, groupby ...string) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 q := t.Map(func(r struct{Name string}, i int) struct{Info string}){
 			return struct{Info string}{fmt.Sprintf("rec %d for %s", i, r.Name)}
 		})
@@ -389,7 +389,7 @@ func (t *Table) Map(r interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 c := make(chan struct{Name string})
 t.Sink(c)
 for x := range c {
@@ -431,7 +431,7 @@ func (t *Table) makeRow(i int, tp reflect.Type) reflect.Value {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 r := struct{Name string; Age int}{}
 t.Fetch(0,&r)
 r.Name -> "Ivanov"
@@ -440,7 +440,7 @@ r.Age -> 32
 func (t *Table) Fetch(i int, r interface{}) {
 	q := reflect.ValueOf(r)
 	if q.Kind() != reflect.Ptr && q.Elem().Kind() != reflect.Struct {
-		panic("only pointer to struct is allowed as argumet")
+		panic("only pointer to a struct is allowed as argumet")
 	}
 	q.Elem().Set(t.makeRow(i, q.Elem().Type()))
 }
