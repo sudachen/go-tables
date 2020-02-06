@@ -131,4 +131,12 @@ func Test_ColumnUnique(t *testing.T) {
 	assert.DeepEqual(t, q2.Col("Name").Unique().Strings(), []string{"Ivanov", "Petrov", "Sidorov"})
 	assert.DeepEqual(t, q2.Col("Age").Unique().Ints(), []int{32, 44, 55})
 	assert.DeepEqual(t, q2.Col("Rate").Unique().Floats(), []float32{1.2, 1.5, 0})
+
+	q3 := q.Append([]struct {
+		Name string
+		Tall int
+	}{
+		{"Sidorov", 55}, {"Ivanov", 55}})
+
+	assert.DeepEqual(t, q3.Col("Tall").Unique().Strings(), []string{"0", "55"})
 }
