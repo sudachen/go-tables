@@ -66,7 +66,9 @@ func ValsOf(m interface{}) interface{} {
 func Convert(v reflect.Value, tp reflect.Type) interface{} {
 	vt := v.Type()
 	if v.Kind() == reflect.Slice {
-		if vt.Elem() == tp { return v.Interface() }
+		if vt.Elem() == tp {
+			return v.Interface()
+		}
 		if tp.Kind() == reflect.String {
 			rs := make([]string, v.Len(), v.Len())
 			for i := range rs {
@@ -75,14 +77,16 @@ func Convert(v reflect.Value, tp reflect.Type) interface{} {
 			return rs
 		} else if vt.Elem().ConvertibleTo(tp) {
 			r := reflect.MakeSlice(reflect.SliceOf(tp), v.Len(), v.Len())
-			for i:=0; i<v.Len(); i++ {
+			for i := 0; i < v.Len(); i++ {
 				x := v.Index(i).Convert(tp)
 				r.Index(i).Set(x)
 			}
 			return r.Interface()
 		}
 	} else {
-		if vt == tp { return v.Interface() }
+		if vt == tp {
+			return v.Interface()
+		}
 		if tp.Kind() == reflect.String {
 			return fmt.Sprint(v.Interface())
 		} else if v.Type().ConvertibleTo(tp) {
@@ -94,7 +98,7 @@ func Convert(v reflect.Value, tp reflect.Type) interface{} {
 
 func MapInterface(m map[string]reflect.Value) map[string]interface{} {
 	r := map[string]interface{}{}
-	for k,v := range m {
+	for k, v := range m {
 		r[k] = v.Interface()
 	}
 	return r

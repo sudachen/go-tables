@@ -8,11 +8,15 @@ import (
 )
 
 func PrepareTable(t *testing.T) *tables.Table {
-	q := tables.New([]struct{Name string; Age int; Rate float32}{
-		{"Ivanov",32,1.2},
-		{"Petrov",44,1.5}})
-	assert.DeepEqual(t, q.Names(), []string{"Name","Age","Rate"})
-	assert.Assert(t, q.Len() == 2 )
+	q := tables.New([]struct {
+		Name string
+		Age  int
+		Rate float32
+	}{
+		{"Ivanov", 32, 1.2},
+		{"Petrov", 44, 1.5}})
+	assert.DeepEqual(t, q.Names(), []string{"Name", "Age", "Rate"})
+	assert.Assert(t, q.Len() == 2)
 	assert.DeepEqual(t, util.MapInterface(q.Row(0)),
 		map[string]interface{}{
 			"Name": "Ivanov",

@@ -50,7 +50,7 @@ t.Col("Age").Int(0) -> 32
 */
 func (c *Column) Int(row int) int {
 	v := c.column.Index(row)
-	return util.Convert(v,intType).(int)
+	return util.Convert(v, intType).(int)
 }
 
 /*
@@ -59,7 +59,7 @@ t.Col("Age").Int8(0) -> 32
 */
 func (c *Column) Int8(row int) int8 {
 	v := c.column.Index(row)
-	return util.Convert(v,int8Type).(int8)
+	return util.Convert(v, int8Type).(int8)
 }
 
 /*
@@ -68,7 +68,7 @@ t.Col("Age").Int16(0) -> 32
 */
 func (c *Column) Int16(row int) int16 {
 	v := c.column.Index(row)
-	return util.Convert(v,int16Type).(int16)
+	return util.Convert(v, int16Type).(int16)
 }
 
 /*
@@ -77,17 +77,17 @@ t.Col("Age").Int64(0) -> 32
 */
 func (c *Column) Int32(row int) int32 {
 	v := c.column.Index(row)
-	return util.Convert(v,int32Type).(int32)
+	return util.Convert(v, int32Type).(int32)
 }
+
 /*
 t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Col("Age").Int64(0) -> 32
 */
 func (c *Column) Int64(row int) int64 {
 	v := c.column.Index(row)
-	return util.Convert(v,int64Type).(int64)
+	return util.Convert(v, int64Type).(int64)
 }
-
 
 /*
 t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
@@ -95,7 +95,7 @@ t.Col("Age").Uint(0) -> 32
 */
 func (c *Column) Uint(row int) uint {
 	v := c.column.Index(row)
-	return util.Convert(v,uintType).(uint)
+	return util.Convert(v, uintType).(uint)
 }
 
 /*
@@ -104,7 +104,7 @@ t.Col("Age").Uint8(0) -> 32
 */
 func (c *Column) Uint8(row int) uint8 {
 	v := c.column.Index(row)
-	return util.Convert(v,uint8Type).(uint8)
+	return util.Convert(v, uint8Type).(uint8)
 }
 
 /*
@@ -113,7 +113,7 @@ t.Col("Age").Uint16(0) -> 32
 */
 func (c *Column) Uint16(row int) uint16 {
 	v := c.column.Index(row)
-	return util.Convert(v,uint16Type).(uint16)
+	return util.Convert(v, uint16Type).(uint16)
 }
 
 /*
@@ -122,7 +122,7 @@ t.Col("Age").Uint64(0) -> 32
 */
 func (c *Column) Uint32(row int) uint32 {
 	v := c.column.Index(row)
-	return util.Convert(v,uint32Type).(uint32)
+	return util.Convert(v, uint32Type).(uint32)
 }
 
 /*
@@ -131,7 +131,7 @@ t.Col("Age").Int64(0) -> 32
 */
 func (c *Column) Uint64(row int) uint64 {
 	v := c.column.Index(row)
-	return util.Convert(v,uint64Type).(uint64)
+	return util.Convert(v, uint64Type).(uint64)
 }
 
 /*
@@ -216,13 +216,14 @@ func (c *Column) Uints64() []uint64 {
 
 var floatType = reflect.TypeOf(float32(0))
 var float64Type = reflect.TypeOf(float64(0))
+
 /*
 t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Col("Rate").Float(0) -> 1.2
 */
 func (c *Column) Float(row int) float32 {
 	v := c.column.Index(row)
-	return util.Convert(v,floatType).(float32)
+	return util.Convert(v, floatType).(float32)
 }
 
 /*
@@ -231,7 +232,7 @@ t.Col("Rate").Float64(0) -> 1.2
 */
 func (c *Column) Float64(row int) float64 {
 	v := c.column.Index(row)
-	return util.Convert(v,float64Type).(float64)
+	return util.Convert(v, float64Type).(float64)
 }
 
 /*
@@ -266,11 +267,11 @@ t.Col("Rate").ExtractAs(reflect.TypeOf(int(0))).([]int)[0] -> 1
 func (c *Column) ExtractAs(tp reflect.Type) interface{} {
 	if c.column.Type().Elem() == tp {
 		l := c.column.Len()
-		r := reflect.MakeSlice(c.column.Type(),l,l)
-		reflect.Copy(r,c.column)
+		r := reflect.MakeSlice(c.column.Type(), l, l)
+		reflect.Copy(r, c.column)
 		return r.Interface()
 	} else {
-		return util.Convert(c.column,tp)
+		return util.Convert(c.column, tp)
 	}
 }
 
@@ -306,14 +307,14 @@ u2.Unique().Len() -> 2
 */
 func (c *Column) Unique() *Column {
 	v := reflect.ValueOf(true)
-	m := reflect.MakeMap(reflect.MapOf(c.column.Type().Elem(),v.Type()))
-	r := reflect.MakeSlice(c.column.Type(),0,0)
-	for i:=0; i < c.column.Len(); i++ {
+	m := reflect.MakeMap(reflect.MapOf(c.column.Type().Elem(), v.Type()))
+	r := reflect.MakeSlice(c.column.Type(), 0, 0)
+	for i := 0; i < c.column.Len(); i++ {
 		x := c.column.Index(i)
 		q := m.MapIndex(x)
 		if !q.IsValid() {
-			r = reflect.Append(r,x)
-			m.SetMapIndex(x,v)
+			r = reflect.Append(r, x)
+			m.SetMapIndex(x, v)
 		}
 	}
 	return &Column{r}
