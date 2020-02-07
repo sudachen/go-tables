@@ -1,3 +1,6 @@
+//
+// Package tables implements immutable tables abstraction
+//
 package tables
 
 import (
@@ -5,6 +8,10 @@ import (
 	"reflect"
 )
 
+/*
+Table implements column based typed data structure
+Every values in a column has the same type.
+*/
 type Table struct {
 	names   []string
 	columns []reflect.Value
@@ -12,49 +19,64 @@ type Table struct {
 	length  int
 }
 
+/*
+Len returns count of table rows
+*/
 func (t *Table) Len() int {
 	return t.length
 }
 
+/*
+Names returns list of column names
+*/
 func (t *Table) Names() []string {
 	r := make([]string, len(t.names), len(t.names))
 	copy(r, t.names)
 	return r
 }
 
+/*
+Empty creates new empty table
+*/
 func Empty() *Table {
 	t := &Table{}
 	return t
 }
 
 /*
-tables.New(struct{Name string; Age int; Rate float32}{})
-tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-tables.New(map[string]interface{}{"Name":[]string{"Ivanov","Petrov"},"Age":[]int{32,44},"Rate":[]float32{1.2,1.5}})
+New creates new Table object
 
-type R struct{Name string; Age int; Rate float32}
-c := make(chan R)
-go func(){
-	c <- R{"Ivanov",32,1.2}
-	c <- R{"Petrov",44,1.5}
-	close(c)
-}()
-tables.New(c)
+ - from empty list of structs or empty struct
+	tables.New([]struct{Name string; Age int; Rate float32}{})
+	for empty table.
+
+ - from list of structs
+	tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+
+ - from map
+	tables.New(map[string]interface{}{"Name":[]string{"Ivanov","Petrov"},"Age":[]int{32,44},"Rate":[]float32{1.2,1.5}})
+
+ - from channel of structs
+	type R struct{Name string; Age int; Rate float32}
+	c := make(chan R)
+	go func(){
+		c <- R{"Ivanov",32,1.2}
+		c <- R{"Petrov",44,1.5}
+		close(c)
+	}()
+	tables.New(c)
 */
 func New(o interface{}) *Table {
 
 	q := reflect.ValueOf(o)
 
 	switch q.Kind() {
-	case reflect.Ptr: // New(&struct{}{})
-		q = q.Elem()
-		fallthrough
-	case reflect.Struct: // New(struct{}{})
-		s := reflect.MakeSlice(reflect.SliceOf(q.Type()), 1, 1)
-		s.Index(0).Set(q)
-		q = s
-		fallthrough
-
+	/*case reflect.Ptr: // New(&struct{}{})
+			q = q.Elem()
+			fallthrough
+	  	case reflect.Struct: // New(struct{}{})
+			q = reflect.MakeSlice(reflect.SliceOf(q.Type()), 0, 0)
+			fallthrough*/
 	case reflect.Slice: // New([]struct{}{{}})
 		l := q.Len()
 		tp := q.Type().Elem()
@@ -136,11 +158,13 @@ func New(o interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-t.Slice(0).Row(0) -> {"Ivanov",32,1.2}
-t.Slice(1).Row(0) -> {"Petrov",44,1.5}
-t.Slice(0,2).Len() -> 2
-t.Slice(1,2).Len() -> 1
+Slice takes a row slice from table
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	t.Slice(0).Row(0) -> {"Ivanov",32,1.2}
+	t.Slice(1).Row(0) -> {"Petrov",44,1.5}
+	t.Slice(0,2).Len() -> 2
+	t.Slice(1,2).Len() -> 1
 */
 func (t *Table) Slice(slice ...int) *Table {
 	from, to := 0, t.length
@@ -163,8 +187,12 @@ func (t *Table) Slice(slice ...int) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-t.Only("Age","Rate").Row(0) -> {"Age": 32, "Rate": 1.2}
+Only takes specified columns as new table
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	t2 := t.Only("Age","Rate")
+	t2.Names() -> ["Age", "Rate"]
+	t2.Row(0) -> {"Age": 32, "Rate": 1.2}
 */
 func (t *Table) Only(column ...string) *Table {
 	rn := make([]string, len(column), len(column))
@@ -185,35 +213,44 @@ func (t *Table) Only(column ...string) *Table {
 }
 
 /*
-t := tables.Empty()
-t = t.Append(struct{Name string; Age int; Rate float32}{"Ivanov",32,1.2})
-t = t.Append([]struct{Name string; Age int; Rate: float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-t = t.Append(map[string]interface{}{"Name":[]string{"Ivanov","Petrov"},"Age":[]int{32,44},"Rate":[]float32{1.2,1.5}})
+Append adds data to table
 
-insert empty column
-t = t.Append([]struct{Info string}{})
-t = t.Append(map[string]interface{}{"Info":[]string{})
+	t := tables.Empty()
 
-insert from channel
-type R struct{Name string; Age int; Rate float32}
-c := make(chan R)
-go func(){
-	c <- R{"Ivanov",32,1.2}
-	c <- R{"Petrov",44,1.5}
-	close(c)
-}()
-t.Append(c)
+  - from list of structs
+	t = t.Append([]struct{Name string; Age int; Rate: float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+  - from map of values
+	t = t.Append(map[string]interface{}{"Name":[]string{"Ivanov","Petrov"},"Age":[]int{32,44},"Rate":[]float32{1.2,1.5}})
+
+  - from channel
+	type R struct{Name string; Age int; Rate float32}
+	c := make(chan R)
+	go func(){
+		c <- R{"Ivanov",32,1.2}
+		c <- R{"Petrov",44,1.5}
+		close(c)
+	}()
+	t.Append(c)
+
+Or inserts empty column
+  - by empty list of structs
+	t = t.Append([]struct{Info string}{})
+  - by map of values
+	t = t.Append(map[string]interface{}{"Info":[]string{})
+
 */
 func (t *Table) Append(o interface{}) *Table {
 	return t.Concat(New(o))
 }
 
 /*
-t1 := tables.New(struct{Name string; Age int; Rate float32}{"Ivanov",32,1.2})
-t2 := tables.New(struct{Name string; Age int; Rate float32}{"Petrov",44})
-q := t1.Concat(t2)
-q.Row(0) -> {"Ivanov",32,1.2}
-q.Row(1) -> {"Petrov",44,0}
+Concat concats two tables into new one
+
+	t1 := tables.New(struct{Name string; Age int; Rate float32}{"Ivanov",32,1.2})
+	t2 := tables.New(struct{Name string; Age int; Rate float32}{"Petrov",44})
+	q := t1.Concat(t2)
+	q.Row(0) -> {"Ivanov",32,1.2}
+	q.Row(1) -> {"Petrov",44,0}
 */
 func (t *Table) Concat(a *Table) *Table {
 	names := t.Names()
@@ -247,11 +284,13 @@ func (t *Table) Concat(a *Table) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-q := t.Transform(func(r struct{Name string}, i int) struct{Info string}{
-			return struct{Info string}{fmt.Sprintf("rec %d for %s", i, r.Name)}
-		})
-q.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2, "Info": "rec 0 for Ivanov"}
+Transform transforms table by rows and returns new transformed table
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	q := t.Transform(func(r struct{Name string}, i int) struct{Info string}{
+				return struct{Info string}{fmt.Sprintf("rec %d for %s", i, r.Name)}
+			})
+	q.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2, "Info": "rec 0 for Ivanov"}
 */
 func (t *Table) Transform(f interface{}) *Table {
 	t2 := t.Map(f)
@@ -274,10 +313,12 @@ func (t *Table) Transform(f interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-t.List(func(r struct{Rate float}, i int){
-			fmt.Println(i, r.Rate)
-		})
+List executes function for every row
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	t.List(func(r struct{Rate float}, i int){
+				fmt.Println(i, r.Rate)
+			})
 */
 func (t *Table) List(f interface{}) {
 	q := reflect.ValueOf(f)
@@ -289,11 +330,13 @@ func (t *Table) List(f interface{}) {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-q := t.Filter(func(r struct{Age int}) bool{
-			return r.Age > 40
-		})
-q.Row(0) -> {Name: "Petrov", "Age": 44, "Rate", 1.5}
+Filter call predicate for every row and returns new table with passed only rows
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	q := t.Filter(func(r struct{Age int}) bool{
+				return r.Age > 40
+			})
+	q.Row(0) -> {Name: "Petrov", "Age": 44, "Rate", 1.5}
 */
 func (t *Table) Filter(f interface{}) *Table {
 	q := reflect.ValueOf(f)
@@ -310,37 +353,43 @@ func (t *Table) Filter(f interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-t.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2}
-q := t.Sort("Name",tables.DESC)
-q.Row(0) -> {Name: "Petrov", "Age": 44, "Rate", 1.5}
+Sort sorts rows by specified columns and returns new sorted table
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	t.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2}
+	q := t.Sort("Name",tables.DESC)
+	q.Row(0) -> {Name: "Petrov", "Age": 44, "Rate", 1.5}
 */
 func (t *Table) Sort(opt interface{}) *Table {
 	return nil
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Ivanov",33,1.3},{"Petrov",44,1.5}})
-t.Len() -> 3
-q := t.Reduce(func(a struct{Age int}, r *struct{Age int}, i int){
-			r.Age = func(a,b int)int{ if a.Age >= r.Age {return a.Age} return r.Age }(a,b)
-			return
-		}, "Name")
-q.Len() -> 2
-// "Name" is grouping field so it's retained, all other fields not presented in result will skipped
-q.Row(0) -> {"Name":"Ivanov", "Age": 33}
-q.Row(1) -> {"Name":"Petrov", "Age": 44}
+Reduce groups several rows into one by specified columns or all if no one specified and returns new reduced table
+
+	t := tables.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Ivanov",33,1.3},{"Petrov",44,1.5}})
+	t.Len() -> 3
+	q := t.Reduce(func(a struct{Age int}, r *struct{Age int}, i int){
+				r.Age = func(a,b int)int{ if a.Age >= r.Age {return a.Age} return r.Age }(a,b)
+				return
+			}, "Name")
+	q.Len() -> 2
+	// "Name" is grouping field so it's retained, all other fields not presented in result will skipped
+	q.Row(0) -> {"Name":"Ivanov", "Age": 33}
+	q.Row(1) -> {"Name":"Petrov", "Age": 44}
 */
 func (t *Table) Reduce(f interface{}, groupby ...string) *Table {
 	return nil
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-q := t.Map(func(r struct{Name string}, i int) struct{Info string}){
-			return struct{Info string}{fmt.Sprintf("rec %d for %s", i, r.Name)}
-		})
-q.Row(0) -> {"Info": "rec 0 for Ivanov"}
+Map applies transformation to every row and returns new table containing only transformation results
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	q := t.Map(func(r struct{Name string}, i int) struct{Info string}){
+				return struct{Info string}{fmt.Sprintf("rec %d for %s", i, r.Name)}
+			})
+	q.Row(0) -> {"Info": "rec 0 for Ivanov"}
 */
 func (t *Table) Map(f interface{}) *Table {
 	l := 0
@@ -355,26 +404,27 @@ func (t *Table) Map(f interface{}) *Table {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-c := make(chan struct{Name string})
-go t.Sink(c)
-for x := range c {
-	fmr.Println(x.Name)
-}
+Sink sends all rows to the channel
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	c := make(chan struct{Name string})
+	go t.Sink(c)
+	for x := range c {
+		fmr.Println(x.Name)
+	}
 */
 func (t *Table) Sink(c interface{}) {
 }
 
 /*
-SinkMap transforms in parallel table rows and send results to a channel
-in the order rows presented in the table.
+SinkMap transforms table rows and sends results to the channel
 
-type R struct{Info string}
-c := make(chan R)
-t.SinkMap(c, func(a struct{Name string; Age int})R{ return R{fmt.Sprint("%s: %d",a.Name,a.Age)} })
-for x := range c {
-	fmt.Println(x.Info)
-}
+	type R struct{Info string}
+	c := make(chan R)
+	t.SinkMap(c, func(a struct{Name string; Age int})R{ return R{fmt.Sprint("%s: %d",a.Name,a.Age)} })
+	for x := range c {
+		fmt.Println(x.Info)
+	}
 */
 func (t *Table) SinkMap(c interface{}, f interface{}) {
 }

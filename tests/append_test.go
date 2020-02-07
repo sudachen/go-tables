@@ -20,6 +20,6 @@ func Test_Append0(t *testing.T) {
 	q2 := q.Append([]struct{ Name string }{})
 	assert.Assert(t, q.Len() == q2.Len())
 	assert.Assert(t, cmp.Panics(func() { q2.Append(struct{ Name int }{0}) }))
-	assert.Assert(t, q.Append(struct{ Age int }{0}).Len() == q.Len()+1)
-	assert.Assert(t, q.Append(&struct{ Tall int }{0}).Len() == q.Len()+1)
+	assert.Assert(t, q.Append([]struct{ Age int }{{0}}).Len() == q.Len()+1)
+	assert.Assert(t, q.Append([]struct{ Tall int }{{0}}).Len() == q.Len()+1)
 }

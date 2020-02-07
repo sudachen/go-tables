@@ -6,8 +6,9 @@ import (
 )
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-t.Row(0)["Name"].String() -> "Ivanov"
+Row returns table row as a map of reflect.Value
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	t.Row(0)["Name"].String() -> "Ivanov"
 */
 func (t *Table) Row(row int) map[string]reflect.Value {
 	r := map[string]reflect.Value{}
@@ -19,7 +20,7 @@ func (t *Table) Row(row int) map[string]reflect.Value {
 }
 
 /*
-gets required fields as a struct
+MakeRow gets required fields as a struct
 */
 func (t *Table) MakeRow(i int, tp reflect.Type) reflect.Value {
 	v := reflect.New(tp)
@@ -36,11 +37,13 @@ func (t *Table) MakeRow(i int, tp reflect.Type) reflect.Value {
 }
 
 /*
-t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
-r := struct{Name string; Age int}{}
-t.Fetch(0,&r)
-r.Name -> "Ivanov"
-r.Age -> 32
+Fetch fills struct with table' row data
+
+	t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
+	r := struct{Name string; Age int}{}
+	t.Fetch(0,&r)
+	r.Name -> "Ivanov"
+	r.Age -> 32
 */
 func (t *Table) Fetch(i int, r interface{}) {
 	q := reflect.ValueOf(r)

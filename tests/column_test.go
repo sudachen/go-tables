@@ -108,10 +108,10 @@ func Test_ColumnLen(t *testing.T) {
 
 	assert.Assert(t, q.Len() == 2)
 
-	q2 := q.Append(struct {
+	q2 := q.Append([]struct {
 		Name string
 		Age  int
-	}{"Sidorov", 55})
+	}{{"Sidorov", 55}})
 
 	assert.Assert(t, q.Len() == 2)
 	assert.Assert(t, q2.Len() == 3)
@@ -124,8 +124,7 @@ func Test_ColumnUnique(t *testing.T) {
 	q2 := q.Append([]struct {
 		Name string
 		Age  int
-	}{
-		{"Sidorov", 55}, {"Ivanov", 55}})
+	}{{"Sidorov", 55}, {"Ivanov", 55}})
 
 	assert.Assert(t, q2.Len() == 4)
 	assert.DeepEqual(t, q2.Col("Name").Unique().Strings(), []string{"Ivanov", "Petrov", "Sidorov"})
@@ -135,8 +134,7 @@ func Test_ColumnUnique(t *testing.T) {
 	q3 := q.Append([]struct {
 		Name string
 		Tall int
-	}{
-		{"Sidorov", 55}, {"Ivanov", 55}})
+	}{{"Sidorov", 55}, {"Ivanov", 55}})
 
 	assert.DeepEqual(t, q3.Col("Tall").Unique().Strings(), []string{"0", "55"})
 }

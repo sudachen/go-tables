@@ -18,11 +18,11 @@ func Test_New0(t *testing.T) {
 }
 
 func Test_New1(t *testing.T) {
-	q := tables.New(struct {
+	q := tables.New([]struct {
 		Name string
 		Age  int
 		Rate float32
-	}{"Ivanov", 32, 1.2})
+	}{{"Ivanov", 32, 1.2}})
 	assert.DeepEqual(t, q.Names(), []string{"Name", "Age", "Rate"})
 	assert.Assert(t, q.Len() == 1)
 	assert.DeepEqual(t, util.MapInterface(q.Row(0)),
