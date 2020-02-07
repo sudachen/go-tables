@@ -21,9 +21,8 @@ func New(c interface{}) *Source {
 			}
 			return r
 		}
-		return &Source{nil, v.Elem().Type(), f }
+		return &Source{nil, v.Elem().Type(), f}
 	} else {
 		panic("only chan struct{...} is allowed as an argument")
 	}
 }
-

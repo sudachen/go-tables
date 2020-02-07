@@ -21,11 +21,11 @@ func Lazy(t *tables.Table, x interface{}) *Source {
 			}
 			return reflect.ValueOf(false)
 		}
-		return &Source{new(int), vt,f}
+		return &Source{new(int), vt, f}
 	} else if v.Kind() == reflect.Func &&
 		vt.NumIn() == 1 && vt.NumOut() == 1 &&
 		vt.In(0).Kind() == reflect.Struct &&
-		( vt.Out(0).Kind() == reflect.Struct || vt.Out(0).Kind() == reflect.Bool ) {
+		(vt.Out(0).Kind() == reflect.Struct || vt.Out(0).Kind() == reflect.Bool) {
 		ti := vt.In(0)
 		to := vt.Out(0)
 		isFilter := to.Kind() == reflect.Bool
@@ -47,21 +47,23 @@ func Lazy(t *tables.Table, x interface{}) *Source {
 			return reflect.ValueOf(false)
 		}
 		if isFilter {
-			return &Source{new(int), ti,f}
+			return &Source{new(int), ti, f}
 		}
-		return &Source{new(int), to,f}
+		return &Source{new(int), to, f}
 	} else {
 		panic("only struct{...}, func(struct{...})struct{...} or func(struct{...})bool are allowed as an argument")
 	}
 }
 
 func (z *Source) FillUp() *tables.Table {
-	c := reflect.MakeChan(z.Tp,0)
+	c := reflect.MakeChan(z.Tp, 0)
 	go func() {
 		for {
 			v := z.Next(z.Ctx)
 			if v.Kind() == reflect.Bool {
-				if !v.Bool() { break }
+				if !v.Bool() {
+					break
+				}
 			} else {
 				c.Send(v)
 			}
@@ -70,5 +72,3 @@ func (z *Source) FillUp() *tables.Table {
 	}()
 	return tables.New(c)
 }
-
-
