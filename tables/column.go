@@ -11,6 +11,27 @@ type Column struct {
 }
 
 /*
+t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",42,1.2},{"Petrov",42,1.5}})
+t.Col("Name").String(0) -> "Ivanov"
+t.Col("Name").Len() -> 2
+*/
+func (t *Table) Col(column string) *Column {
+	for i, n := range t.names {
+		if n == column {
+			if t.cols == nil {
+				t.cols = make([]*Column, len(t.names), len(t.names))
+			}
+			if t.cols[i] == nil {
+				c := &Column{column: t.columns[i]}
+				t.cols[i] = c
+			}
+			return t.cols[i]
+		}
+	}
+	panic("there is not column with name " + column)
+}
+
+/*
 t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 t.Col("Name").String(0) -> "Ivanov"
 */
