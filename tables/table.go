@@ -287,8 +287,8 @@ q := t.Transform(func(r struct{Name string}, i int) struct{Info string}{
 		})
 q.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2, "Info": "rec 0 for Ivanov"}
 */
-func (t *Table) Transform(r interface{}) *Table {
-	t2 := t.Map(r)
+func (t *Table) Transform(f interface{}) *Table {
+	t2 := t.Map(f)
 	names := t.Names()
 	columns := make([]reflect.Value, t.length, t.length)
 	copy(columns, t.columns)
@@ -313,12 +313,12 @@ t.List(func(r struct{Rate float}, i int){
 			fmt.Println(i, r.Rate)
 		})
 */
-func (t *Table) List(r interface{}) {
-	q := reflect.ValueOf(r)
+func (t *Table) List(f interface{}) {
+	q := reflect.ValueOf(f)
 	tp := q.Type().In(0)
 	for i := 0; i < t.length; i++ {
 		iv := reflect.ValueOf(i)
-		q.Call([]reflect.Value{t.makeRow(i, tp), iv})
+		q.Call([]reflect.Value{t.MakeRow(i, tp), iv})
 	}
 }
 
@@ -329,13 +329,13 @@ q := t.Filter(func(r struct{Age int}) bool{
 		})
 q.Row(0) -> {Name: "Petrov", "Age": 44, "Rate", 1.5}
 */
-func (t *Table) Filter(r interface{}) *Table {
-	q := reflect.ValueOf(r)
+func (t *Table) Filter(f interface{}) *Table {
+	q := reflect.ValueOf(f)
 	tp := q.Type().In(0)
 	idxs := make([]int, 0, t.length)
 	for i := 0; i < t.length; i++ {
 		iv := reflect.ValueOf(i)
-		rv := q.Call([]reflect.Value{t.makeRow(i, tp), iv})
+		rv := q.Call([]reflect.Value{t.MakeRow(i, tp), iv})
 		if rv[0].Bool() {
 			idxs = append(idxs, i)
 		}
@@ -376,7 +376,7 @@ q := t.Map(func(r struct{Name string}, i int) struct{Info string}){
 		})
 q.Row(0) -> {"Info": "rec 0 for Ivanov"}
 */
-func (t *Table) Map(r interface{}) *Table {
+func (t *Table) Map(f interface{}) *Table {
 	l := 0
 	names := make([]string, l, l)
 	columns := make([]reflect.Value, l, l)
@@ -391,7 +391,7 @@ func (t *Table) Map(r interface{}) *Table {
 /*
 t := tables.New([]struct{Name string; Age int; Rate float32}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
 c := make(chan struct{Name string})
-t.Sink(c)
+go t.Sink(c)
 for x := range c {
 	fmr.Println(x.Name)
 }
@@ -410,13 +410,13 @@ for x := range c {
 	fmt.Println(x.Info)
 }
 */
-func (t *Table) SinkMap(c interface{}, r interface{}) {
+func (t *Table) SinkMap(c interface{}, f interface{}) {
 }
 
 /*
 gets required fields as a struct
 */
-func (t *Table) makeRow(i int, tp reflect.Type) reflect.Value {
+func (t *Table) MakeRow(i int, tp reflect.Type) reflect.Value {
 	v := reflect.New(tp)
 	fl := tp.NumField()
 	for i := 0; i < fl; i++ {
@@ -442,5 +442,5 @@ func (t *Table) Fetch(i int, r interface{}) {
 	if q.Kind() != reflect.Ptr && q.Elem().Kind() != reflect.Struct {
 		panic("only pointer to a struct is allowed as argumet")
 	}
-	q.Elem().Set(t.makeRow(i, q.Elem().Type()))
+	q.Elem().Set(t.MakeRow(i, q.Elem().Type()))
 }
