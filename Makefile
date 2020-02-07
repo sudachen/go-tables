@@ -7,6 +7,7 @@ run-tests:
 	sed -i -e '\:^github.com/sudachen/go-fp:d' c.out
 	cp c.out gocov.txt
 	sed -i -e 's:github.com/sudachen/go-tables/::g' c.out
+	cat c.out
 
 run-cover:
 	go tool cover -html=gocov.txt
