@@ -16,7 +16,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		if vt.Kind() == reflect.Ptr {
 			vt = vt.Elem()
 		}
-		getf := func(index int, _ interface{}) reflect.Value {
+		getf := func(index int) reflect.Value {
 			if index < t.Len() {
 				return t.MakeRow(index, vt)
 			}
@@ -30,7 +30,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		ti := vt.In(0)
 		to := vt.Out(0)
 		isFilter := to.Kind() == reflect.Bool
-		getf := func(index int, ctx interface{}) reflect.Value {
+		getf := func(index int) reflect.Value {
 			if index < t.Len() {
 				q := []reflect.Value{t.MakeRow(index, ti)}
 				r := v.Call(q)
@@ -57,7 +57,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 FillUp fills new table from the transformation source
 */
 func FillUp(z *lazy.Stream) *Table {
-	c := reflect.MakeChan(z.Tp, 0)
+	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir,z.Tp), 0)
 	go func() {
 		index := 0
 		for {
@@ -73,7 +73,7 @@ func FillUp(z *lazy.Stream) *Table {
 		}
 		c.Close()
 	}()
-	return New(c)
+	return New(c.Interface())
 }
 
 /*
@@ -82,7 +82,7 @@ ConqFillUp fills new table from the transformation source concurrently
 func ConqFillUp(z *lazy.Stream, concurrency int) *Table {
 	index := &lazy.AtomicCounter{0}
 	wc := &lazy.WaitCounter{Value: 0}
-	c := reflect.MakeChan(z.Tp, concurrency)
+	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir,z.Tp), concurrency)
 	gw := sync.WaitGroup{}
 	gw.Add(concurrency)
 	for i := 0; i < concurrency; i++ {
@@ -106,5 +106,5 @@ func ConqFillUp(z *lazy.Stream, concurrency int) *Table {
 		gw.Wait()
 		c.Close()
 	}()
-	return New(c)
+	return New(c.Interface())
 }

@@ -7,12 +7,14 @@ import (
 	"testing"
 )
 
+type TR struct {
+	Name string
+	Age  int
+	Rate float32
+}
+
 func PrepareTable(t *testing.T) *tables.Table {
-	q := tables.New([]struct {
-		Name string
-		Age  int
-		Rate float32
-	}{
+	q := tables.New([]TR{
 		{"Ivanov", 32, 1.2},
 		{"Petrov", 44, 1.5}})
 	assert.DeepEqual(t, q.Names(), []string{"Name", "Age", "Rate"})
@@ -32,3 +34,25 @@ func PrepareTable(t *testing.T) *tables.Table {
 
 	return q
 }
+
+var trList = []TR{
+	{"Ivanov", 32, 1.2},
+	{"Petrov", 44, 1.5},
+	{"Sidorov", 55, 1.8},
+	{"Gavrilov", 20, 0.9},
+	{"Popova", 28, 1.0},
+	{"Kozlov", 42, 1.3},
+}
+
+func assertTrData(t *testing.T, q *tables.Table) {
+	assert.Assert(t, q.Len() == len(trList))
+	for i, r := range trList {
+		assert.DeepEqual(t, util.MapInterface(q.Row(i)),
+			map[string]interface{}{
+				"Name": r.Name,
+				"Age":  r.Age,
+				"Rate": r.Rate,
+			})
+	}
+}
+
