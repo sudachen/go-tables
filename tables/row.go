@@ -20,7 +20,7 @@ func (t *Table) Row(row int) map[string]reflect.Value {
 }
 
 /*
-FillRow gets required fields as a struct
+FillRow fills row as a struct
 */
 func (t *Table) FillRow(i int, tp reflect.Type, p reflect.Value) {
 	v := p.Elem()
@@ -36,9 +36,9 @@ func (t *Table) FillRow(i int, tp reflect.Type, p reflect.Value) {
 }
 
 /*
-MakeRow gets required fields as a struct
+GetRow gets row as a struct wrapped by reflect.Value
 */
-func (t *Table) MakeRow(i int, tp reflect.Type) reflect.Value {
+func (t *Table) GetRow(i int, tp reflect.Type) reflect.Value {
 	v := reflect.New(tp)
 	t.FillRow(i, tp, v)
 	return v.Elem()
@@ -58,6 +58,5 @@ func (t *Table) Fetch(i int, r interface{}) {
 	if q.Kind() != reflect.Ptr && q.Elem().Kind() != reflect.Struct {
 		panic("only pointer to a struct is allowed as argumet")
 	}
-	//q.Elem().Set(t.MakeRow(i, q.Elem().Type()))
 	t.FillRow(i, q.Elem().Type(), q)
 }

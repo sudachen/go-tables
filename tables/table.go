@@ -325,7 +325,7 @@ func (t *Table) List(f interface{}) {
 	tp := q.Type().In(0)
 	for i := 0; i < t.length; i++ {
 		iv := reflect.ValueOf(i)
-		q.Call([]reflect.Value{t.MakeRow(i, tp), iv})
+		q.Call([]reflect.Value{t.GetRow(i, tp), iv})
 	}
 }
 
@@ -344,7 +344,7 @@ func (t *Table) Filter(f interface{}) *Table {
 	idxs := make([]int, 0, t.length)
 	for i := 0; i < t.length; i++ {
 		iv := reflect.ValueOf(i)
-		rv := q.Call([]reflect.Value{t.MakeRow(i, tp), iv})
+		rv := q.Call([]reflect.Value{t.GetRow(i, tp), iv})
 		if rv[0].Bool() {
 			idxs = append(idxs, i)
 		}

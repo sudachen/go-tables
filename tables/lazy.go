@@ -18,7 +18,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		}
 		getf := func(index int) reflect.Value {
 			if index < t.Len() {
-				return t.MakeRow(index, vt)
+				return t.GetRow(index, vt)
 			}
 			return reflect.ValueOf(false)
 		}
@@ -32,7 +32,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		isFilter := to.Kind() == reflect.Bool
 		getf := func(index int) reflect.Value {
 			if index < t.Len() {
-				q := []reflect.Value{t.MakeRow(index, ti)}
+				q := []reflect.Value{t.GetRow(index, ti)}
 				r := v.Call(q)
 				if isFilter {
 					if r[0].Bool() {
