@@ -16,14 +16,13 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		if vt.Kind() == reflect.Ptr {
 			vt = vt.Elem()
 		}
-		getf := func(index int, ctx interface{}) reflect.Value {
-			ctx.(*lazy.Counter).IncAwait(index)
+		getf := func(index int, _ interface{}) reflect.Value {
 			if index < t.Len() {
 				return t.MakeRow(index, vt)
 			}
 			return reflect.ValueOf(false)
 		}
-		return &lazy.Stream{Get: getf, Ctx: &lazy.Counter{0}, Tp: vt}
+		return &lazy.Stream{Getf: getf, Tp: vt}
 	} else if v.Kind() == reflect.Func &&
 		vt.NumIn() == 1 && vt.NumOut() == 1 &&
 		vt.In(0).Kind() == reflect.Struct &&
@@ -32,7 +31,6 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		to := vt.Out(0)
 		isFilter := to.Kind() == reflect.Bool
 		getf := func(index int, ctx interface{}) reflect.Value {
-			ctx.(*lazy.Counter).IncAwait(index)
 			if index < t.Len() {
 				q := []reflect.Value{t.MakeRow(index, ti)}
 				r := v.Call(q)
@@ -47,9 +45,9 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 			return reflect.ValueOf(false)
 		}
 		if isFilter {
-			return &lazy.Stream{Get: getf, Ctx: &lazy.Counter{0}, Tp: ti}
+			return &lazy.Stream{Getf: getf, Tp: ti}
 		}
-		return &lazy.Stream{Get: getf, Ctx: &lazy.Counter{0}, Tp: to}
+		return &lazy.Stream{Getf: getf, Tp: to}
 	} else {
 		panic("only struct{...}, func(struct{...})struct{...} or func(struct{...})bool are allowed as an argument")
 	}
@@ -82,7 +80,8 @@ func FillUp(z *lazy.Stream) *Table {
 ConqFillUp fills new table from the transformation source concurrently
 */
 func ConqFillUp(z *lazy.Stream, concurrency int) *Table {
-	index := &lazy.Counter{0}
+	index := &lazy.AtomicCounter{0}
+	wc := &lazy.WaitCounter{Value: 0}
 	c := reflect.MakeChan(z.Tp, concurrency)
 	gw := sync.WaitGroup{}
 	gw.Add(concurrency)
@@ -90,13 +89,15 @@ func ConqFillUp(z *lazy.Stream, concurrency int) *Table {
 		go func() {
 			defer gw.Done()
 			for {
-				v := z.Next(index.GetInc())
-				if v.Kind() == reflect.Bool {
-					if !v.Bool() {
-						break
-					}
-				} else {
+				n := index.Inc()
+				v := z.Next(n)
+				wc.Wait(n)
+				if v.Kind() != reflect.Bool {
 					c.Send(v)
+				}
+				wc.Inc()
+				if v.Kind() == reflect.Bool && !v.Bool() {
+					break
 				}
 			}
 		}()
