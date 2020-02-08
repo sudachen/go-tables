@@ -57,7 +57,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 FillUp fills new table from the transformation source
 */
 func FillUp(z *lazy.Stream) *Table {
-	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir,z.Tp), 0)
+	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, z.Tp), 0)
 	go func() {
 		index := 0
 		for {
@@ -82,7 +82,7 @@ ConqFillUp fills new table from the transformation source concurrently
 func ConqFillUp(z *lazy.Stream, concurrency int) *Table {
 	index := &lazy.AtomicCounter{0}
 	wc := &lazy.WaitCounter{Value: 0}
-	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir,z.Tp), concurrency)
+	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, z.Tp), concurrency)
 	gw := sync.WaitGroup{}
 	gw.Add(concurrency)
 	for i := 0; i < concurrency; i++ {

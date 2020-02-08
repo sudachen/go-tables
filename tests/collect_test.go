@@ -9,13 +9,12 @@ import (
 
 func Test_Collect(t *testing.T) {
 	q := tables.New(trList)
-	assertTrData(t,q)
+	assertTrData(t, q)
 	r := q.Collect(TR{}).([]TR)
 	assert.DeepEqual(t, trList, r)
 	r = q.Collect(&TR{}).([]TR)
 	assert.DeepEqual(t, trList, r)
-	assert.Assert(t, cmp.Panics(func(){
+	assert.Assert(t, cmp.Panics(func() {
 		r = q.Collect(false).([]TR)
 	}))
 }
-

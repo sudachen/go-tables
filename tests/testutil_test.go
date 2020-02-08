@@ -55,4 +55,3 @@ func assertTrData(t *testing.T, q *tables.Table) {
 			})
 	}
 }
-
