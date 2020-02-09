@@ -13,7 +13,7 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 	v := reflect.ValueOf(x)
 	vt := v.Type()
 	flag := &lazy.AtomicFlag{Value: 1}
-	stopf := func() { flag.Off() }
+	stopf := func() { flag.Clear() }
 	if v.Kind() == reflect.Struct || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct) {
 		if vt.Kind() == reflect.Ptr {
 			vt = vt.Elem()
