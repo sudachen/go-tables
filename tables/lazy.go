@@ -12,17 +12,19 @@ Lazy creates new lazy transformation stream from the table and empty struct or s
 func (t *Table) Lazy(x interface{}) *lazy.Stream {
 	v := reflect.ValueOf(x)
 	vt := v.Type()
+	flag := &lazy.AtomicFlag{Value: 1}
+	stopf := func() { flag.Off() }
 	if v.Kind() == reflect.Struct || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct) {
 		if vt.Kind() == reflect.Ptr {
 			vt = vt.Elem()
 		}
-		getf := func(index int) reflect.Value {
-			if index < t.Len() {
-				return t.GetRow(index, vt)
+		getf := func(index int64) reflect.Value {
+			if index < int64(t.Len()) && flag.State() {
+				return t.GetRow(int(index), vt)
 			}
 			return reflect.ValueOf(false)
 		}
-		return &lazy.Stream{Getf: getf, Tp: vt}
+		return &lazy.Stream{Getf: getf, Tp: vt, Stopf: stopf}
 	} else if v.Kind() == reflect.Func &&
 		vt.NumIn() == 1 && vt.NumOut() == 1 &&
 		vt.In(0).Kind() == reflect.Struct &&
@@ -30,9 +32,9 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 		ti := vt.In(0)
 		to := vt.Out(0)
 		isFilter := to.Kind() == reflect.Bool
-		getf := func(index int) reflect.Value {
-			if index < t.Len() {
-				q := []reflect.Value{t.GetRow(index, ti)}
+		getf := func(index int64) reflect.Value {
+			if index < int64(t.Len()) && flag.State() {
+				q := []reflect.Value{t.GetRow(int(index), ti)}
 				r := v.Call(q)
 				if isFilter {
 					if r[0].Bool() {
@@ -45,9 +47,9 @@ func (t *Table) Lazy(x interface{}) *lazy.Stream {
 			return reflect.ValueOf(false)
 		}
 		if isFilter {
-			return &lazy.Stream{Getf: getf, Tp: ti}
+			return &lazy.Stream{Getf: getf, Tp: ti, Stopf: stopf}
 		}
-		return &lazy.Stream{Getf: getf, Tp: to}
+		return &lazy.Stream{Getf: getf, Tp: to, Stopf: stopf}
 	} else {
 		panic("only struct{...}, func(struct{...})struct{...} or func(struct{...})bool are allowed as an argument")
 	}
@@ -59,7 +61,7 @@ FillUp fills new table from the transformation source
 func FillUp(z *lazy.Stream) *Table {
 	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, z.Tp), 0)
 	go func() {
-		index := 0
+		index := int64(0)
 		for {
 			v := z.Next(index)
 			index++
@@ -68,6 +70,7 @@ func FillUp(z *lazy.Stream) *Table {
 					break
 				}
 			} else {
+				// not need to use select{send&stop}
 				c.Send(v)
 			}
 		}
@@ -93,6 +96,7 @@ func ConqFillUp(z *lazy.Stream, concurrency int) *Table {
 				v := z.Next(n)
 				wc.Wait(n)
 				if v.Kind() != reflect.Bool {
+					// not need to use select{send&stop}
 					c.Send(v)
 				}
 				wc.Inc()
