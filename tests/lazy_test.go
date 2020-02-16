@@ -15,6 +15,11 @@ func Test_Lazy1(t *testing.T) {
 
 	q = tables.ConqFillUp(lazy.New(trList), 6)
 	assertTrData(t, q)
+
+	z := q.Lazy(TR{})
+	z.Close()
+	q = tables.FillUp(z)
+	assert.Assert(t, q.Len() == 0)
 }
 
 func Test_Lazy2(t *testing.T) {

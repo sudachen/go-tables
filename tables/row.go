@@ -12,9 +12,9 @@ Row returns table row as a map of reflect.Value
 */
 func (t *Table) Row(row int) map[string]reflect.Value {
 	r := map[string]reflect.Value{}
-	for i, n := range t.names {
+	for i, n := range t.raw.Names {
 		// prevent to change value in slice via returned reflect.Value
-		r[n] = reflect.ValueOf(t.columns[i].Index(row).Interface())
+		r[n] = reflect.ValueOf(t.raw.Columns[i].Index(row).Interface())
 	}
 	return r
 }
@@ -27,11 +27,11 @@ func (t *Table) FillRow(i int, tp reflect.Type, p reflect.Value) {
 	fl := tp.NumField()
 	for fi := 0; fi < fl; fi++ {
 		n := tp.Field(fi).Name
-		j := util.IndexOf(n, t.names)
+		j := util.IndexOf(n, t.raw.Names)
 		if j < 0 {
 			panic("table does not have field " + n)
 		}
-		v.Field(fi).Set(t.columns[j].Index(i))
+		v.Field(fi).Set(t.raw.Columns[j].Index(i))
 	}
 }
 

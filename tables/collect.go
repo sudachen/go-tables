@@ -10,8 +10,8 @@ func (t *Table) Collect(s interface{}) interface{} {
 	if tp.Kind() != reflect.Struct {
 		panic("only struct{...} is allowed as an argument")
 	}
-	r := reflect.MakeSlice(reflect.SliceOf(tp), t.length, t.length)
-	for i := 0; i < t.length; i++ {
+	r := reflect.MakeSlice(reflect.SliceOf(tp), t.raw.Length, t.raw.Length)
+	for i := 0; i < t.raw.Length; i++ {
 		t.FillRow(i, tp, r.Index(i).Addr())
 	}
 	return r.Interface()

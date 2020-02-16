@@ -1,34 +1,22 @@
 package tables
 
 import (
+	"github.com/sudachen/go-tables/internal"
 	"github.com/sudachen/go-tables/util"
 	"reflect"
 )
 
 type Column struct {
 	column reflect.Value
+	na     util.Bits
 }
-
-var intType = reflect.TypeOf(int(0))
-var int8Type = reflect.TypeOf(int8(0))
-var int16Type = reflect.TypeOf(int16(0))
-var int32Type = reflect.TypeOf(int32(0))
-var int64Type = reflect.TypeOf(int64(0))
-var uintType = reflect.TypeOf(uint(0))
-var uint8Type = reflect.TypeOf(uint8(0))
-var uint16Type = reflect.TypeOf(uint16(0))
-var uint32Type = reflect.TypeOf(uint32(0))
-var uint64Type = reflect.TypeOf(uint64(0))
-var floatType = reflect.TypeOf(float32(0))
-var float64Type = reflect.TypeOf(float64(0))
-var stringType = reflect.TypeOf("")
 
 func Col(a interface{}) *Column {
 	v := reflect.ValueOf(a)
 	if v.Kind() != reflect.Slice {
 		panic("anly slice is allowed as an argument")
 	}
-	return &Column{v}
+	return &Column{v, util.Bits{}}
 }
 
 /*
@@ -39,13 +27,13 @@ Table.Col returns Column object for the table' column selected by the name
 	t.Col("Name").Len() -> 2
 */
 func (t *Table) Col(column string) *Column {
-	for i, n := range t.names {
+	for i, n := range t.raw.Names {
 		if n == column {
 			if t.cols == nil {
-				t.cols = make([]*Column, len(t.names), len(t.names))
+				t.cols = make([]*Column, len(t.raw.Names))
 			}
 			if t.cols[i] == nil {
-				c := &Column{column: t.columns[i]}
+				c := &Column{t.raw.Columns[i], t.raw.Na[i]}
 				t.cols[i] = c
 			}
 			return t.cols[i]
@@ -65,6 +53,10 @@ func (c *Column) String(row int) string {
 	return c.Index(row).String()
 }
 
+func (c *Column) Na(i int) bool {
+	return c.na.Bit(i)
+}
+
 /*
 Strings extracts column' values as []string
 
@@ -72,7 +64,7 @@ Strings extracts column' values as []string
 	t.Col("Name").Strings() -> {"Ivanov","Petrow"}
 */
 func (c *Column) Strings() []string {
-	return c.ExtractAs(stringType).([]string)
+	return c.ExtractAs(internal.StringType).([]string)
 }
 
 /*
@@ -138,7 +130,7 @@ Uint returns column' value converted to uint
 */
 func (c *Column) Uint(row int) uint {
 	v := c.column.Index(row)
-	return util.Convert(v, uintType).(uint)
+	return util.Convert(v, internal.UintType).(uint)
 }
 
 /*
@@ -149,7 +141,7 @@ Uint8 returns column' value converted to uint8
 */
 func (c *Column) Uint8(row int) uint8 {
 	v := c.column.Index(row)
-	return util.Convert(v, uint8Type).(uint8)
+	return util.Convert(v, internal.Uint8Type).(uint8)
 }
 
 /*
@@ -160,7 +152,7 @@ Uint16 returns column' value converted to uint16
 */
 func (c *Column) Uint16(row int) uint16 {
 	v := c.column.Index(row)
-	return util.Convert(v, uint16Type).(uint16)
+	return util.Convert(v, internal.Uint16Type).(uint16)
 }
 
 /*
@@ -171,7 +163,7 @@ Uint32 returns column' value converted to uint32
 */
 func (c *Column) Uint32(row int) uint32 {
 	v := c.column.Index(row)
-	return util.Convert(v, uint32Type).(uint32)
+	return util.Convert(v, internal.Uint32Type).(uint32)
 }
 
 /*
@@ -192,7 +184,7 @@ Ints extracts column' values as []int
 	t.Col("Age").Ints() -> {32,44}
 */
 func (c *Column) Ints() []int {
-	return c.ExtractAs(intType).([]int)
+	return c.ExtractAs(internal.IntType).([]int)
 }
 
 /*
@@ -202,7 +194,7 @@ Ints8 extracts column' values as []int8
 	t.Col("Age").Ints8() -> {32,44}
 */
 func (c *Column) Ints8() []int8 {
-	return c.ExtractAs(int8Type).([]int8)
+	return c.ExtractAs(internal.Int8Type).([]int8)
 }
 
 /*
@@ -212,7 +204,7 @@ Ints16 extracts column' values as []int16
 	t.Col("Age").Ints16() -> {32,44}
 */
 func (c *Column) Ints16() []int16 {
-	return c.ExtractAs(int16Type).([]int16)
+	return c.ExtractAs(internal.Int16Type).([]int16)
 }
 
 /*
@@ -222,7 +214,7 @@ Ints32 extracts column' values as []int32
 	t.Col("Age").Ints32() -> {32,44}
 */
 func (c *Column) Ints32() []int32 {
-	return c.ExtractAs(int32Type).([]int32)
+	return c.ExtractAs(internal.Int32Type).([]int32)
 }
 
 /*
@@ -232,7 +224,7 @@ Ints64 extracts column' values as []int64
 	t.Col("Age").Ints64() -> {32,44}
 */
 func (c *Column) Ints64() []int64 {
-	return c.ExtractAs(int64Type).([]int64)
+	return c.ExtractAs(internal.Int64Type).([]int64)
 }
 
 /*
@@ -242,7 +234,7 @@ Uints extracts column' values as []uint
 	t.Col("Age").Uints() -> {32,44}
 */
 func (c *Column) Uints() []uint {
-	return c.ExtractAs(uintType).([]uint)
+	return c.ExtractAs(internal.UintType).([]uint)
 }
 
 /*
@@ -252,7 +244,7 @@ Uints8 extracts column' values as []uint8
 	t.Col("Age").Uints8() -> {32,44}
 */
 func (c *Column) Uints8() []uint8 {
-	return c.ExtractAs(uint8Type).([]uint8)
+	return c.ExtractAs(internal.Uint8Type).([]uint8)
 }
 
 /*
@@ -262,7 +254,7 @@ Uints16 extracts column' values as []uint16
 	t.Col("Age").Uints16() -> {32,44}
 */
 func (c *Column) Uints16() []uint16 {
-	return c.ExtractAs(uint16Type).([]uint16)
+	return c.ExtractAs(internal.Uint16Type).([]uint16)
 }
 
 /*
@@ -272,7 +264,7 @@ Uints32 extracts column' values as []uint32
 	t.Col("Age").Uints32() -> {32,44}
 */
 func (c *Column) Uints32() []uint32 {
-	return c.ExtractAs(uint32Type).([]uint32)
+	return c.ExtractAs(internal.Uint32Type).([]uint32)
 }
 
 /*
@@ -282,7 +274,7 @@ Uints64 extracts column' values as []uint64
 	t.Col("Age").Uints64() -> {32,44}
 */
 func (c *Column) Uints64() []uint64 {
-	return c.ExtractAs(uint64Type).([]uint64)
+	return c.ExtractAs(internal.Uint64Type).([]uint64)
 }
 
 /*
@@ -312,7 +304,7 @@ Floats extracts column' values as []float32
 	t.Col("Rate").Floats() -> {1.2,1.5}
 */
 func (c *Column) Floats() []float32 {
-	return c.ExtractAs(floatType).([]float32)
+	return c.ExtractAs(internal.FloatType).([]float32)
 }
 
 /*
@@ -322,7 +314,7 @@ Floats64 extracts column' values as []float64
 	t.Col("Rate").Floats64() -> {1.2,1.5}
 */
 func (c *Column) Floats64() []float64 {
-	return c.ExtractAs(float64Type).([]float64)
+	return c.ExtractAs(internal.Float64Type).([]float64)
 }
 
 /*
@@ -409,7 +401,7 @@ func (c *Column) Unique() *Column {
 			m.SetMapIndex(x, v)
 		}
 	}
-	return &Column{r}
+	return &Column{r, util.Bits{}}
 }
 
 /*

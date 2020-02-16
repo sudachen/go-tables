@@ -5,33 +5,46 @@ package tables
 
 import (
 	"github.com/sudachen/go-tables/util"
+	"math/bits"
 	"reflect"
 )
+
+type Raw struct {
+	Names   []string
+	Columns []reflect.Value
+	Na      []util.Bits
+	Length  int
+}
 
 /*
 Table implements column based typed data structure
 Every values in a column has the same type.
 */
 type Table struct {
-	names   []string
-	columns []reflect.Value
-	cols    []*Column
-	length  int
+	raw  Raw
+	cols []*Column
+}
+
+/*
+Raw returns raw table structure
+*/
+func (t *Table) Raw() Raw {
+	return t.raw
 }
 
 /*
 Len returns count of table rows
 */
 func (t *Table) Len() int {
-	return t.length
+	return t.raw.Length
 }
 
 /*
 Names returns list of column names
 */
 func (t *Table) Names() []string {
-	r := make([]string, len(t.names), len(t.names))
-	copy(r, t.names)
+	r := make([]string, len(t.raw.Names), len(t.raw.Names))
+	copy(r, t.raw.Names)
 	return r
 }
 
@@ -41,6 +54,20 @@ Empty creates new empty table
 func Empty() *Table {
 	t := &Table{}
 	return t
+}
+
+/*
+MakeTable creates ne non-empty table
+*/
+func MakeTable(names []string, columns []reflect.Value, na []util.Bits, length int) *Table {
+	return &Table{
+		raw: Raw{
+			Names:   names,
+			Columns: columns,
+			Na:      na,
+			Length:  length},
+		cols: nil,
+	}
 }
 
 /*
@@ -96,11 +123,7 @@ func New(o interface{}) *Table {
 			}
 		}
 
-		return &Table{
-			names:   names,
-			columns: columns,
-			length:  l,
-		}
+		return MakeTable(names, columns, make([]util.Bits, len(names)), l)
 
 	case reflect.Chan: // New(chan struct{})
 		tp := q.Type().Elem()
@@ -127,11 +150,7 @@ func New(o interface{}) *Table {
 			length++
 		}
 
-		return &Table{
-			names:   names,
-			columns: columns,
-			length:  length,
-		}
+		return MakeTable(names, columns, make([]util.Bits, len(names)), length)
 
 	case reflect.Map: // New(map[string]interface{}{})
 		m := o.(map[string]interface{})
@@ -148,10 +167,7 @@ func New(o interface{}) *Table {
 			reflect.Copy(columns[i], vals)
 		}
 
-		return &Table{
-			names:   names,
-			columns: columns,
-			length:  l}
+		return MakeTable(names, columns, make([]util.Bits, len(names)), l)
 	}
 
 	panic("bad argument type")
@@ -167,7 +183,7 @@ Slice takes a row slice from table
 	t.Slice(1,2).Len() -> 1
 */
 func (t *Table) Slice(slice ...int) *Table {
-	from, to := 0, t.length
+	from, to := 0, t.raw.Length
 	if len(slice) > 0 {
 		from = slice[0]
 		to = from + 1
@@ -175,15 +191,15 @@ func (t *Table) Slice(slice ...int) *Table {
 	if len(slice) > 1 {
 		to = slice[1]
 	}
-	rv := make([]reflect.Value, len(t.columns), len(t.columns))
-	for i, v := range t.columns {
+	rv := make([]reflect.Value, len(t.raw.Columns))
+	for i, v := range t.raw.Columns {
 		rv[i] = v.Slice(from, to)
 	}
-	return &Table{
-		names:   t.Names(),
-		columns: rv,
-		length:  to - from,
+	na := make([]util.Bits, len(t.raw.Columns))
+	for i, x := range t.raw.Na {
+		na[i] = x.Slice(from, to)
 	}
+	return MakeTable(t.raw.Names, rv, na, to-from)
 }
 
 /*
@@ -195,21 +211,19 @@ Only takes specified columns as new table
 	t2.Row(0) -> {"Age": 32, "Rate": 1.2}
 */
 func (t *Table) Only(column ...string) *Table {
-	rn := make([]string, len(column), len(column))
+	rn := make([]string, len(column))
 	copy(rn, column)
-	rv := make([]reflect.Value, len(column), len(column))
-	for i, v := range t.columns {
+	rv := make([]reflect.Value, len(column))
+	na := make([]util.Bits, len(column))
+	for i, v := range t.raw.Columns {
 		for j, n := range rn {
-			if n == t.names[i] {
-				rv[j] = v.Slice(0, t.length)
+			if n == t.raw.Names[i] {
+				rv[j] = v.Slice(0, t.raw.Length)
+				na[j] = t.raw.Na[i]
 			}
 		}
 	}
-	return &Table{
-		names:   rn,
-		columns: rv,
-		length:  t.length,
-	}
+	return MakeTable(rn, rv, na, t.raw.Length)
 }
 
 /*
@@ -255,32 +269,34 @@ Concat concats two tables into new one
 func (t *Table) Concat(a *Table) *Table {
 	names := t.Names()
 	columns := make([]reflect.Value, len(names), len(names))
-	copy(columns, t.columns)
+	copy(columns, t.raw.Columns)
+	na := make([]util.Bits, len(names))
+	copy(na, t.raw.Na)
 
-	for i, n := range a.names {
+	for i, n := range a.raw.Names {
 		j := util.IndexOf(n, names)
 		if j < 0 {
-			col := reflect.MakeSlice(a.columns[i].Type() /*[]type*/, t.length, t.length+a.length)
-			col = reflect.AppendSlice(col, a.columns[i])
+			col := reflect.MakeSlice(a.raw.Columns[i].Type() /*[]type*/, t.raw.Length, t.raw.Length+a.raw.Length)
+			col = reflect.AppendSlice(col, a.raw.Columns[i])
 			names = append(names, n)
 			columns = append(columns, col)
+			na = append(na, util.FillBits(t.raw.Length).Append(a.raw.Na[i], t.raw.Length))
 		} else {
-			columns[j] = reflect.AppendSlice(columns[j], a.columns[i])
+			columns[j] = reflect.AppendSlice(columns[j], a.raw.Columns[i])
+			na[j] = na[j].Append(a.raw.Na[i], t.raw.Length)
 		}
 	}
 
 	for i, col := range columns {
-		if col.Len() < a.length+t.length {
+		if col.Len() < a.raw.Length+t.raw.Length {
 			columns[i] = reflect.AppendSlice(
 				col,
-				reflect.MakeSlice(col.Type(), a.length, a.length))
+				reflect.MakeSlice(col.Type(), a.raw.Length, a.raw.Length))
+			na[i] = na[i].Append(util.FillBits(a.raw.Length), t.raw.Length)
 		}
 	}
 
-	return &Table{
-		names:   names,
-		columns: columns,
-		length:  t.length + a.length}
+	return MakeTable(names, columns, na, a.raw.Length+t.raw.Length)
 }
 
 /*
@@ -293,23 +309,25 @@ Transform transforms table by rows and returns new transformed table
 	q.Row(0) -> {Name: "Ivanov", "Age": 32, "Rate", 1.2, "Info": "rec 0 for Ivanov"}
 */
 func (t *Table) Transform(f interface{}) *Table {
+	l := len(t.raw.Names)
 	t2 := t.Map(f)
-	names := t.Names()
-	columns := make([]reflect.Value, t.length, t.length)
-	copy(columns, t.columns)
-	for i, n := range t2.names {
+	names := make([]string, l)
+	copy(names, t.raw.Names)
+	columns := make([]reflect.Value, l)
+	copy(columns, t.raw.Columns)
+	na := make([]util.Bits, l)
+	copy(na, t.raw.Na)
+	for i, n := range t2.raw.Names {
 		if j := util.IndexOf(n, names); j >= 0 {
-			columns[j] = t2.columns[i]
+			columns[j] = t2.raw.Columns[i]
+			na[j] = util.Bits{}
 		} else {
 			names = append(names, n)
-			columns = append(columns, t2.columns[i])
+			columns = append(columns, t2.raw.Columns[i])
+			na = append(na, util.Bits{})
 		}
 	}
-	return &Table{
-		names:   names,
-		columns: columns,
-		length:  t.length,
-	}
+	return MakeTable(names, columns, na, t.raw.Length)
 }
 
 /*
@@ -323,7 +341,7 @@ List executes function for every row
 func (t *Table) List(f interface{}) {
 	q := reflect.ValueOf(f)
 	tp := q.Type().In(0)
-	for i := 0; i < t.length; i++ {
+	for i := 0; i < t.raw.Length; i++ {
 		iv := reflect.ValueOf(i)
 		q.Call([]reflect.Value{t.GetRow(i, tp), iv})
 	}
@@ -341,8 +359,8 @@ Filter call predicate for every row and returns new table with passed only rows
 func (t *Table) Filter(f interface{}) *Table {
 	q := reflect.ValueOf(f)
 	tp := q.Type().In(0)
-	idxs := make([]int, 0, t.length)
-	for i := 0; i < t.length; i++ {
+	idxs := make([]int, 0, t.raw.Length)
+	for i := 0; i < t.raw.Length; i++ {
 		iv := reflect.ValueOf(i)
 		rv := q.Call([]reflect.Value{t.GetRow(i, tp), iv})
 		if rv[0].Bool() {
@@ -393,14 +411,11 @@ Map applies transformation to every row and returns new table containing only tr
 */
 func (t *Table) Map(f interface{}) *Table {
 	l := 0
-	names := make([]string, l, l)
-	columns := make([]reflect.Value, l, l)
+	names := make([]string, l)
+	columns := make([]reflect.Value, l)
+	na := make([]util.Bits, l)
 
-	return &Table{
-		names:   names,
-		columns: columns,
-		length:  t.length,
-	}
+	return MakeTable(names, columns, na, t.raw.Length)
 }
 
 /*
@@ -427,4 +442,58 @@ SinkMap transforms table rows and sends results to the channel
 	}
 */
 func (t *Table) SinkMap(c interface{}, f interface{}) {
+}
+
+/*
+ */
+func (t *Table) DropNa(names ...string) *Table {
+	var dx []int
+	if len(names) > 0 {
+		dx = make([]int, 0, len(names))
+		for _, n := range names {
+			i := util.IndexOf(n, t.raw.Names)
+			if i < 0 {
+				panic("does not have field " + n)
+			}
+			dx = append(dx, i)
+		}
+	} else {
+		dx = make([]int, len(t.raw.Names))
+		for i := range t.raw.Names {
+			dx[i] = i
+		}
+	}
+	rc := t.raw.Length
+	wc := util.Words(t.raw.Length)
+	for j := 0; j < wc; j++ {
+		w := uint(0)
+		for _, i := range dx {
+			w |= t.raw.Na[i].Word(j)
+		}
+		rc -= bits.OnesCount(w)
+	}
+	if rc == t.raw.Length {
+		return t
+	}
+	na := make([]util.Bits, len(t.raw.Columns))
+	columns := make([]reflect.Value, len(t.raw.Columns))
+	for i := range t.raw.Columns {
+		columns[i] = reflect.MakeSlice(t.raw.Columns[i].Type(), rc, rc)
+	}
+	k := 0
+	for j := 0; j < t.raw.Length; j++ {
+		b := false
+		for _, i := range dx {
+			b = b || t.raw.Na[i].Bit(j)
+		}
+		if b {
+			continue
+		}
+		for i := range t.raw.Columns {
+			columns[i].Index(k).Set(t.raw.Columns[i].Index(j))
+			na[i].Set(k, t.raw.Na[i].Bit(j))
+		}
+		k++
+	}
+	return MakeTable(t.raw.Names, columns, na, rc)
 }

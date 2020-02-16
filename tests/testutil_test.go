@@ -44,6 +44,10 @@ var trList = []TR{
 	{"Kozlov", 42, 1.3},
 }
 
+func TrTable() *tables.Table {
+	return tables.New(trList)
+}
+
 func assertTrData(t *testing.T, q *tables.Table) {
 	assert.Assert(t, q.Len() == len(trList))
 	for i, r := range trList {
