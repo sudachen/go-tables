@@ -11,7 +11,7 @@ func Less(a, b reflect.Value) bool {
 	if a.Kind() != b.Kind() {
 		panic("values must have the same type")
 	}
-	if m := a.MethodByName("Less"); !m.IsZero() {
+	if m := a.MethodByName("Less"); m.IsValid() {
 		t := m.Type()
 		if t.NumOut() == 1 && t.NumIn() == 1 && t.Out(0).Kind() == reflect.Bool && t.In(0) == a.Type() {
 			return m.Call([]reflect.Value{b})[0].Bool()
@@ -27,6 +27,11 @@ func Less(a, b reflect.Value) bool {
 	case reflect.String:
 		return a.String() < b.String()
 	case reflect.Ptr:
+		if a.IsNil() && !b.IsNil() {
+			return true
+		} else if b.IsNil() {
+			return false
+		}
 		return Less(a.Elem(), b.Elem())
 	case reflect.Struct:
 		N := a.NumField()

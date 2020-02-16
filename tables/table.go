@@ -4,6 +4,7 @@
 package tables
 
 import (
+	"fmt"
 	"github.com/sudachen/go-tables/util"
 	"math/bits"
 	"reflect"
@@ -496,4 +497,61 @@ func (t *Table) DropNa(names ...string) *Table {
 		k++
 	}
 	return MakeTable(t.raw.Names, columns, na, rc)
+}
+
+func (t *Table) FillNa(r interface{}) *Table {
+	var m map[string]interface{}
+	v := reflect.ValueOf(r)
+	if v.Kind() != reflect.Struct && v.Kind() != reflect.Map {
+		panic("only struct{...} or map[string]interface{} are allowed as an argument")
+	}
+
+	if v.Kind() == reflect.Struct {
+		m = map[string]interface{}{}
+		n := v.NumField()
+		ft := v.Type()
+		for i := 0; i < n; i++ {
+			f := ft.Field(i)
+			m[f.Name] = v.Field(i).Interface()
+		}
+	} else {
+		m = r.(map[string]interface{})
+	}
+
+	columns := make([]reflect.Value, len(t.raw.Columns))
+	na := make([]util.Bits, len(t.raw.Columns))
+	for n, x := range m {
+		j := util.IndexOf(n, t.raw.Names)
+		if j < 0 {
+			panic(" table does not have column " + n)
+		}
+		if t.raw.Na[j].Len() == 0 {
+			columns[j] = t.raw.Columns[j]
+		} else {
+			y := reflect.ValueOf(x)
+			vt := t.raw.Columns[j].Type().Elem()
+			if vt != y.Type() {
+				if vt.Kind() == reflect.String {
+					y = reflect.ValueOf(fmt.Sprint(x))
+				} else {
+					y = y.Convert(vt)
+				}
+			}
+			columns[j] = reflect.MakeSlice(t.raw.Columns[j].Type(), t.raw.Length, t.raw.Length)
+			reflect.Copy(columns[j], t.raw.Columns[j])
+			for k := 0; k < t.raw.Length; k++ {
+				if t.raw.Na[j].Bit(k) {
+					columns[j].Index(k).Set(y)
+				}
+			}
+		}
+	}
+	for i := range columns {
+		if !columns[i].IsValid() {
+			columns[i] = t.raw.Columns[i]
+			na[i] = t.raw.Na[i]
+		}
+	}
+
+	return MakeTable(t.raw.Names, columns, na, t.raw.Length)
 }

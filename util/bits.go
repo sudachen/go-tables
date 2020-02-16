@@ -9,17 +9,12 @@ type Bits struct {
 }
 
 const (
-	_S = _W / 8 // word size in bytes
-
 	_W = bits.UintSize // word size in bits
-	_B = 1 << _W       // digit base
-	_M = _B - 1        // digit mask
 )
 
 func (q *Bits) Set(i int, v bool) {
 	j := i / _W
 	c := j + 1
-	m := uint(1) << (i % _W)
 	n := len(q.b)
 	if !v && n < c {
 		return
@@ -31,6 +26,7 @@ func (q *Bits) Set(i int, v bool) {
 		}
 		q.b = x
 	}
+	m := uint(1) << (i % _W)
 	if v {
 		q.b[j] |= m
 	} else {

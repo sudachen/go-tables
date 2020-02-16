@@ -10,42 +10,6 @@ import (
 	"testing"
 )
 
-type Option1 bool
-type Option2 string
-type Option3 int
-
-func option1(o ...interface{}) bool {
-	return util.Option(Option1(false), o).Bool()
-}
-
-func option2(o ...interface{}) string {
-	return util.Option(Option2(""), o).String()
-}
-
-func option3(o ...interface{}) int {
-	return int(util.Option(Option3(0), o).Int())
-}
-
-func Test_Option1(t *testing.T) {
-
-	assert.Assert(t, option1(Option1(true)) == true)
-	assert.Assert(t, option1(Option1(true), Option1(false)) == true)
-	assert.Assert(t, option1(Option1(false), Option1(true)) == false)
-	assert.Assert(t, option1(Option2(0)) == false)
-	assert.Assert(t, option1() == false)
-
-}
-
-func Test_Option2(t *testing.T) {
-	assert.Assert(t, option2(Option2("hello")) == "hello")
-	assert.Assert(t, option2(Option1(false)) == "")
-}
-
-func Test_Option3(t *testing.T) {
-	assert.Assert(t, option3(Option3(42)) == 42)
-	assert.Assert(t, option3(Option1(false)) == 0)
-}
-
 func Test_BitsAppend(t *testing.T) {
 	b := util.Bits{}
 	b = b.Append(util.Bits{}, 0)
@@ -156,4 +120,15 @@ func Test_Convert(t *testing.T) {
 		util.Convert(reflect.ValueOf(q), internal.TsType)
 	}))
 	assert.DeepEqual(t, util.Convert(reflect.ValueOf(int(1)), internal.StringType), "1")
+}
+
+func Test_MinMax(t *testing.T) {
+	assert.Assert(t, util.Min(reflect.ValueOf([]int{1, 2, 3, 4, 5})).Int() == 1)
+	assert.Assert(t, util.Max(reflect.ValueOf([]int{1, 2, 3, 4, 5})).Int() == 5)
+	assert.Assert(t, cmp.Panics(func() {
+		util.Min(reflect.ValueOf(1))
+	}))
+	assert.Assert(t, cmp.Panics(func() {
+		util.Max(reflect.ValueOf(1))
+	}))
 }

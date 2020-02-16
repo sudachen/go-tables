@@ -55,8 +55,8 @@ Fetch fills struct with table' row data
 */
 func (t *Table) Fetch(i int, r interface{}) {
 	q := reflect.ValueOf(r)
-	if q.Kind() != reflect.Ptr && q.Elem().Kind() != reflect.Struct {
-		panic("only pointer to a struct is allowed as argumet")
+	if q.Kind() != reflect.Ptr || q.Elem().Kind() != reflect.Struct {
+		panic("only &struct{...} is allowed as an argumet")
 	}
 	t.FillRow(i, q.Elem().Type(), q)
 }
