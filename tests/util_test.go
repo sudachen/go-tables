@@ -132,4 +132,3 @@ func Test_MinMax(t *testing.T) {
 		util.Max(reflect.ValueOf(1))
 	}))
 }
-
