@@ -209,7 +209,8 @@ func SqlCreateQuery(t *tables.Table, table string, opts ...interface{}) string {
 		if s, ok := sqltps[n]; ok {
 			query = query + n + " " + s
 		} else {
-			query = query + n + " " + SqlTypeOf(raw.Columns[i].Type().Elem(), driver)
+			query = query + n + " " +
+				SqlTypeOf(raw.Columns[i].Type().Elem(), driver)
 		}
 	}
 
@@ -218,12 +219,16 @@ func SqlCreateQuery(t *tables.Table, table string, opts ...interface{}) string {
 	}
 
 	query += " )"
+	fmt.Println(query)
 	return query
 }
 
 func SqlTypeOf(tp reflect.Type, driver string) string {
 	switch tp.Kind() {
 	case reflect.String:
+		if driver == "postgres" {
+			return "VARCHAR(65535)" /* redshift TEXT == VARCHAR(256) */
+		}
 		return "TEXT"
 	case reflect.Int8, reflect.Uint8, reflect.Int16:
 		return "SMALLINT"
@@ -233,16 +238,14 @@ func SqlTypeOf(tp reflect.Type, driver string) string {
 		return "BIGINT"
 	case reflect.Float32:
 		if driver == "postgres" {
-			return "REAL"
-		} else {
-			return "FLOAT"
+			return "REAL" /* redshift does not FLOAT */
 		}
+		return "FLOAT"
 	case reflect.Float64:
 		if driver == "postgres" {
-			return "DOUBLE PRECISION"
-		} else {
-			return "DOUBLE"
+			return "DOUBLE PRECISION" /* redshift does not have DOUBLE */
 		}
+		return "DOUBLE"
 	case reflect.Bool:
 		return "BOOLEAN"
 	default:
@@ -306,6 +309,7 @@ func GetDbTypes(opts []interface{}) map[string]string {
 			}
 		}
 	}
+	fmt.Println(m)
 	return m
 }
 
